@@ -1,0 +1,6 @@
+#!/bin/bash
+export GUILD_ID=YOUR_GUILD_ID
+export ROLE_IDS=ROLE_ID_1,ROLE_ID_2,ROLE_ID_3
+export CLIENT_SECRET=YOUR_CLIENT_SECRET
+export CHANNEL_ID=YOUR_CHANNEL_ID
+python3 rolelive.py
