@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-import sys
-import time
 import discord
-import datetime
 from discord import Streaming
 import json
 import os
