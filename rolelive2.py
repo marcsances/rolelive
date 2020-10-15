@@ -8,7 +8,7 @@ import requests
 print("Please set all the IDs and secrets before attempting to use this bot!. Remove this print after you've done it.")
 TWITCH_CLIENT_ID="SET_THIS_PLEASE"
 INTERVAL=120
-ROLE_NAMES=["DJ", "Producer"]
+ROLE_NAMES=["Role 1", "Role 2", "Role 3"]
 MESSAGE="%s is now live: **%s** - _%s_ - %s"
 VERSION="0.3.0"
 GUILD_ID=SET_THIS_PLEASE
