@@ -1,9 +1,24 @@
 # rolelive
-This is a very quickly hacked together Discord bot that monitors when a user with a certain role goes live on Twitch/Youtube and makes a notification on the given Discord channel.
+This is a very quickly hacked together Discord bot that monitors when a user with a certain role goes live on Twitch and makes a notification on the given Discord channel. Current version is rolelive2.py.
 
-Monitoring is done using Discord Rich Presence, so the user must have connected the Twitch account and have the streaming status public on his account.
+Users can add their streams using the !addstream command.
 
-This implementation is absolutely basic. But it may serve you as a template for a more rich bot. Up to you.
+There is also an implementation using a different approach (Rich Presence) in rolelive.py. That implementation is absolutely basic. But it may serve you as a template for a more rich bot. Up to you.
+
+## User commands
+
+* !addstream stream_name - users can add their stream using this command, if they have an authorized role. Users may only have a stream at once, running this command with more than one stream will replace the stream.
+* !removestream - users can remove the stream they've added so the bot doesn't track it.
+* !onlinestreams - shows a list of live streams
+* !rolelive - shows RoleLive help and version
+
+## Admin commands
+
+This commands require the user running them to have a role of ADMIN_IDS or be one of ADMIN_USERS.
+
+* !admin.add stream_name - adds the given stream to watch. Notice this stream is not linked to any Discord user, you can add as many as you want.
+* !admin.remove stream_name - removes the given stream from the list.
+* !admin.reload - reloads the stream list from the members.json file. Useful if you're making huge offline changes like populating the list for the first time.
 
 ## Requirements
 
@@ -31,31 +46,18 @@ https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot&permissi
 
 Now enable Developer Mode on Discord (go to Appearance > Developer mode). This will let you get the IDs we need for the bot.
 
-Now open the start.sh file in this project and modify the export lines with the following values:
+Now open the rolelive2.py file in this project and modify the export lines with the following values:
 
 * ``CLIENT_SECRET``: the client secret you just copied from the developer portal.
 * ``GUILD_ID``: the server ID on Discord. Right click the icon of your server and click on "Copy ID".
-* ``ROLE_IDS``: all the role IDs (find a user with the role, right click the role label and choose "Copy ID") for which streaming status is monitored. Each role separated by commas.
+* ``ROLE_IDS``: all the role IDs (find a user with the role, right click the role label and choose "Copy ID") authorized to add their stream. Each role separated by commas.
+* ``ROLE_NAMES``: names of the roles in ROLE_IDS, for help purposes
 * ``CHANNEL_ID``: the ID of the channel where the live notifications will be sent. Right click the channel name to click on Copy ID.
+* ``INTERVAL``: polling rate for the bot. This interval is the time the bot will sleep after checking all streams, before starting another cycle. Allows to help with rate limiting APIs, at the cost of less responsiveness. Keep it between 0 (for a lot of streams) to 120.
+* ``ADMIN_USERS``: **User IDs** allowed to manage the service.
+* ``ADMIN_IDS``: **Role IDs** allowed to manage the service (i.e. ALL users with the role will be able to run admin commands).
+* ``TWITCH_CLIENT_ID``: Twitch client ID required for accessing Twitch API. Get an ID [here](https://dev.twitch.tv/console/apps).
 
-Finally, we need to change crontab so the bot will run periodically. On a terminal, run:
+## Installation
 
-```
-crontab -e
-```
-
-A visual editor appears, add a line at the end of your crontab like this, changing the path ``/home/ubuntu/bots/rolelive/`` with the FULL path to where your bot code is:
-
-```
-*/5 * * * *    cd /home/ubuntu/bots/rolelive/ && ./start.sh
-```
-
-``*/5`` means the bot will run every 5 minutes. ``*/10`` would run every 10 minutes.
-
-**Do not run the bot every minute!** You'll get a nice message from Discord telling it's connected so many times and that they changed its token. Run at least every 5 minutes, or more.
-
-Quit the editor saving the changes. The bot will run from now on.
-
-## Modifying the greeting message
-
-Just modify at the ``rolelive.py`` file the ``MESSAGE`` variable. Please notice it takes three values with %s, the first is the user name, the second is the platform and the last is the link to the stream. Keep that syntax or expect errors.
+Install as a [regular systemd service](https://medium.com/@benmorel/creating-a-linux-service-with-systemd-611b5c8b91d6).
