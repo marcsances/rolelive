@@ -1,4 +1,9 @@
+# We're working on a new, exciting version with more features!
+
+We're building a Discord server to get more feedback and give updates. Feel free to join here: https://discord.gg/XBAtC4MxKb
+
 # rolelive
+
 This is a very quickly hacked together Discord bot that monitors when a user with a certain role goes live on Twitch and makes a notification on the given Discord channel. Current version is rolelive2.py.
 
 Users can add their streams using the !addstream command.
