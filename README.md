@@ -33,8 +33,63 @@ Linux or Mac with Python 3 and pip.
 
 Just install the project requirements.
 
-```
+```bash
 python3 -m pip install -r -requirements.txt
+```
+
+## Docker-compose
+
+### Using docker-compose
+
+First install 'docker' and 'docker-compose' packages to your system.
+
+#### Installing docker
+
+- Debian/Ubuntu/Raspbian systems
+
+```bash
+sudo su
+curl https://get.docker.com/ | bash
+```
+
+- Using Pacman
+
+```bash
+pacman -S docker
+systemctl enable docker  
+```
+
+#### Installing docker-compose
+
+This process is shared between all the distributions.
+
+```bash
+sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+#### Verifying the installation
+
+To check the packages been installed correctly run:
+
+```bash
+docker -v
+docker-compose -v
+```
+
+### Configure docker-compose 
+
+Modify the .env file located at the same folder as docker-compose with the desired values, ie:
+
+```text
+MEMCACHED_USERNAME=desired_username
+MEMCACHED_PASSWORD=desired_password
+```
+
+### Running docker-compose
+Move to the docker project folder and run:
+```bash
+cd /path/to/rolelive/folder/docker
+docker-compose up
 ```
 
 ## Configuration
