@@ -7,12 +7,12 @@ networks:
 services:
 
 # Python
-  python:
-    image: 'oriolfilter/python-rolelive:first_try'
+  rolelive:
+    build:
+      context: ./dockerfiles
+      dockerfile: python-rolelive
     volumes:
       - ./../rolelive2.py:/code/app.py
-#    env_file:
-#      - ./rolelive.env # rolelive v1
     restart: always
     networks:
       - rolelive-net
@@ -24,10 +24,6 @@ services:
       MEMCACHED_THREADS: "${MEMCACHED_THREADS}"
       MEMCACHED_USERNAME: "${MEMCACHED_USERNAME}"
       MEMCACHED_PASSWORD: "${MEMCACHED_PASSWORD}"
-#      - MEMCACHED_PASSWORD_FILE=file_with_admin_passwd
-#    command: /opt/bitnami/scripts/memcached/run.sh -vvv
-#    volumes:
-#    - ./memcached.conf:/opt/bitnami/memcached/sasl2/memcached.conf
     restart: always
     networks:
       - rolelive-net
