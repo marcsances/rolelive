@@ -9,8 +9,7 @@ services:
 # Python
   rolelive:
     build:
-      context: ./dockerfiles
-      dockerfile: python-rolelive
+      context: ./dockerfile
     volumes:
       - ./../rolelive2.py:/code/app.py
     restart: always

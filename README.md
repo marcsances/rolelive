@@ -86,9 +86,9 @@ MEMCACHED_PASSWORD=desired_password
 ```
 
 ### Running docker-compose
-Move to the project folder and run:
+Move to the docker project folder and run:
 ```bash
-cd /path/to/rolelive/folder
+cd /path/to/rolelive/folder/docker
 docker-compose up
 ```
 
