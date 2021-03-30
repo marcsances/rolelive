@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  memcached:
+    image: 'bitnami/memcached:latest'
+  db:
+     image: postgres:13-alpine
+     environment:
+        POSTGRES_PASSWORD: "rolelive"
+        POSTGRES_USER: "rolelive"
+        POSTGRES_DB: "rolelive"
+     volumes:
+       - ./volumes/postgres/data:/var/lib/postgresql/data
+  rolelive:
+    build:
+      context: .
+    depends_on:
+      - db
+      - memcached
