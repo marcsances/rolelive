@@ -44,7 +44,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          pytest src/test
+          pytest .
       - uses: actions/setup-ruby@v1
       - name: Send Webhook Notification
         if: ${{ matrix.python-version == '3.9' }}
