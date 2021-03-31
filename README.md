@@ -1,3 +1,8 @@
+# Welcome to Rolelive 3!
+
+![Build Status](https://github.com/marcsances/rolelive/actions/workflows/main.yml/badge.svg?branch=rolelive3)
+
+
 # We're working on a new, exciting version with more features!
 
 We're building a Discord server to get more feedback and give updates. Feel free to join here: https://discord.gg/XBAtC4MxKb
