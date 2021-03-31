@@ -1,6 +1,7 @@
 # Welcome to Rolelive 3!
 
-[https://github.com/marcsances/rolelive/actions/workflows/main.yml/badge.svg](Build Status)
+![Build Status](https://github.com/marcsances/rolelive/actions/workflows/main.yml/badge.svg?branch=rolelive3)
+
 
 # We're working on a new, exciting version with more features!
 
