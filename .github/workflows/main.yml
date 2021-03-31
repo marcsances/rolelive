@@ -27,6 +27,8 @@ jobs:
         python-version: [3.8, 3.9]
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -44,8 +46,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          ls /home/runner/work/rolelive/rolelive
-          pytest .
+          pytest
       - uses: actions/setup-ruby@v1
       - name: Send Webhook Notification
         if: ${{ matrix.python-version == '3.9' }}
