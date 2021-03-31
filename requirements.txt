@@ -2,3 +2,4 @@ discord
 requests
 rxpy
 inject
+pytest
