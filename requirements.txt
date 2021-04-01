@@ -3,3 +3,4 @@ requests
 rxpy
 inject
 pytest
+psycopg2
