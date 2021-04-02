@@ -9,7 +9,7 @@ class Entity(ABC):
 
     def __serialize(self, value):
         if isinstance(value, Entity):
-            return value.to_json()
+            return value.to_dict()
         elif isinstance(value, list):
             return list(map(lambda item: self.__serialize(item), value))
         elif isinstance(value, dict):
@@ -30,7 +30,7 @@ class Entity(ABC):
 
     def __deserialize(self, key, original_value, new_value):
         if isinstance(original_value, Entity):
-            return original_value.from_json(new_value)
+            return original_value.from_dict(new_value)
         elif isinstance(original_value, list):
             return list(map(lambda item: self.__deserialize(key, "", item), new_value))
         elif isinstance(original_value, dict):
@@ -47,8 +47,8 @@ class Entity(ABC):
                     setattr(self, key1, self.__deserialize(key1, value1, value2))
         return self
 
-    def to_json(self):
+    def to_dict(self):
         return self.__serialize_dict(self.__dict__)
 
-    def from_json(self, obj):
+    def from_dict(self, obj):
         return self.__deserialize_dict(obj)

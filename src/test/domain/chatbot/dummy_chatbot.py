@@ -11,3 +11,6 @@ class DummyChatbot(Chatbot):
 
     def get_mention(self, user_id: int) -> str:
         return "<@" + str(user_id) + ">"
+
+    def start_chatbot(self):
+        pass

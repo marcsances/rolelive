@@ -1,20 +1,17 @@
 import json
-from abc import ABC, abstractmethod
+
+from domain.base.entity import Entity
+from domain.base.list_holder import ListHolder
+from domain.base.reifiable import Reifiable
+from domain.chatbot.chatbot import Chatbot
 
 
-class Config(ABC):
+class Config(Entity):
 
-    @abstractmethod
-    def __init__(self, json_file):
-        self._config = None
+    def __init__(self):
+        super().__init__()
+        self.chatbots: ListHolder[Reifiable[Chatbot]] = ListHolder[Reifiable[Chatbot]](lambda: Reifiable[Chatbot]())
 
-    @property
-    def config(self) -> dict:
-        return self._config
-
-
-class ConfigImpl(Config):
-    def __init__(self, json_file: str):
-        super().__init__(json_file)
+    def load(self, json_file):
         with open(json_file, "r") as f:
-            self._config = json.load(f)
+            self.from_dict(json.load(f))

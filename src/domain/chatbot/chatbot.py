@@ -18,3 +18,7 @@ class Chatbot(ABC):
     @abstractmethod
     def get_mention(self, user_id: int) -> str:
         raise NotImplementedError()
+
+    @abstractmethod
+    def start_chatbot(self):
+        raise NotImplementedError()
