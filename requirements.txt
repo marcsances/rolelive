@@ -4,3 +4,4 @@ rxpy
 inject
 pytest
 psycopg2
+pymemcache

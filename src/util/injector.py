@@ -6,6 +6,7 @@ import inject
 
 from domain.base.config import Config
 from domain.base.reifiable import Reifiable
+from domain.cache.cache import Cache
 from domain.chatbot.chatbot import Chatbot
 
 T = TypeVar('T')
@@ -39,6 +40,7 @@ class Injector(ABC):
         for chatbot in config.chatbots:
             bot: Chatbot = Injector.reflect(chatbot)
             bot.start_chatbot()
+        binder.bind(Cache, Injector.reflect(config.cache))
 
         # here are some examples that I leave for later use
         # catalog_repository = Injector.reflect(config["database"]["provider"])
