@@ -4,7 +4,7 @@
       "package": "infrastructure.discord.discord_chatbot",
       "module": "DiscordChatbot",
       "args": {
-        "bot_token": "DISCORD_BOT_TOKEN_HERE"
+        "bot_token": "DISCORD_BOT_TOKEN_HERE!"
       }
     }
   ]
