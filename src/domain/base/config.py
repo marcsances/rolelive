@@ -6,6 +6,7 @@ from domain.base.reifiable import Reifiable
 from domain.cache.cache import Cache
 from domain.chatbot.chatbot import Chatbot
 from domain.database.dbapi.database import Database
+from domain.watchdog.watchdog import Watchdog
 
 
 class Config(Entity):
@@ -13,6 +14,7 @@ class Config(Entity):
     def __init__(self):
         super().__init__()
         self.chatbots: ListHolder[Reifiable[Chatbot]] = ListHolder[Reifiable[Chatbot]](lambda: Reifiable[Chatbot]())
+        self.watchdogs: ListHolder[Reifiable[Watchdog]] = ListHolder[Reifiable[Watchdog]](lambda: Reifiable[Watchdog]())
         self.cache = Reifiable[Cache]()
         self.database = Reifiable[Database]()
 

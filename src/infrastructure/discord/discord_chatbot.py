@@ -17,12 +17,7 @@ class DiscordChatbot(Chatbot, Client):
         if not channel:
             return
         coro = channel.send(message)
-        task = asyncio.create_task(coro)
-        # This needs to change soon.
-        # I am worried on the performance of this once it scales up.
-        # Problem is out of order execution in the same channel.
-        # Maybe queues could solve it. For now I'm leaving it like this but it needs a second thought.
-        await asyncio.wait(task)
+        await coro
 
     async def on_message(self, message: Message):
         if message.author.bot:

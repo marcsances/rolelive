@@ -10,6 +10,7 @@ import inject
 from domain.base.config import Config
 from domain.chatbot.chatbot import Chatbot
 from domain.database.dbapi.database import Database
+from domain.watchdog.watchdog import Watchdog
 from util.injector import Injector
 
 
@@ -25,6 +26,10 @@ async def main_coro(database: Database = None, config: Config = None):
         bot: Chatbot = Injector.reflect(chatbot)
         # schedule chatbot to run
         awaitables.append(bot.start_chatbot())
+    for watchdog in config.watchdogs:
+        dog: Watchdog = Injector.reflect(watchdog)
+        # schedule watchdog to run
+        awaitables.append(dog.start())
     # actually run all scheduled futures
     await asyncio.gather(*awaitables)
 

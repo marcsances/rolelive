@@ -8,12 +8,32 @@
       }
     }
   ],
+  "watchdogs": [
+    {
+      "package": "infrastructure.twitch.twitch_watchdog",
+      "module": "TwitchWatchdog",
+      "args": {
+
+      }
+    }
+  ],
   "cache": {
     "package": "infrastructure.memcached.memcached_cache",
     "module": "MemcachedCache",
     "args": {
       "host": "localhost",
       "port": 11211
+    }
+  },
+  "database": {
+    "package": "infrastructure.postgresql.postgresql_database",
+    "module": "PostgreSQLDatabase",
+    "args": {
+      "host": "localhost",
+      "port": 5432,
+      "dbname": "rolelive",
+      "username": "rolelive",
+      "password": "rolelive"
     }
   }
 }
