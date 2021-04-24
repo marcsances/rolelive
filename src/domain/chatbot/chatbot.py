@@ -1,16 +1,27 @@
 from abc import ABC, abstractmethod
 from asyncio import Future
 
+from domain.chatbot.commands.init import InitCommand
+from domain.chatbot.commands.rolelive import RoleliveCommand
+
 
 class Chatbot(ABC):
 
     @abstractmethod
     def __init__(self):
-        pass
+        self.commands = [
+            InitCommand(),
+            RoleliveCommand()
+        ]
 
     async def handle_message(self, guild_id: int, channel_id: int, user_id: int, message: str):
-        if message == "!rolelive":
-            await self.say(guild_id, channel_id, self.get_mention(user_id) + " Welcome To Rolelive!")
+        for command in self.commands:
+            if command.matches(message):
+                await command.handle(self, guild_id, channel_id, user_id, *filter(lambda x: len(x) > 0,
+                                                                                  message.replace(command.alias, "")
+                                                                                  .strip()
+                                                                                  .split(" ")))
+                break
 
     @abstractmethod
     def say(self, guild_id: int, channel_id: int, message: str):

@@ -18,4 +18,3 @@ class TestChatbot:
         sut = DummyChatbot()
         asyncio.get_event_loop().run_until_complete(sut.handle_message(1, 2, 3, "!rolelive"))
         mocked_method.assert_called_once_with(1, 2, "<@3> Welcome To Rolelive!")
-
