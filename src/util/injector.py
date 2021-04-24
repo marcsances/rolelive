@@ -7,7 +7,7 @@ import inject
 from domain.base.config import Config
 from domain.base.reifiable import Reifiable
 from domain.cache.cache import Cache
-from domain.chatbot.chatbot import Chatbot
+from domain.database.dbapi.database import Database
 
 T = TypeVar('T')
 
@@ -37,20 +37,9 @@ class Injector(ABC):
             json_file = "config/default.json"
         config = Config()
         config.load(json_file)
-        for chatbot in config.chatbots:
-            bot: Chatbot = Injector.reflect(chatbot)
-            bot.start_chatbot()
+        binder.bind(Config, config)
         binder.bind(Cache, Injector.reflect(config.cache))
-
-        # here are some examples that I leave for later use
-        # catalog_repository = Injector.reflect(config["database"]["provider"])
-        # catalog_service = Injector.reflect(config["catalog"]["provider"], {}, {"catalog_repository": catalog_repository})
-        # index = Injector.reflect(config["index"]["provider"], {}, {"catalog_service": catalog_service})
-        # binder.bind(Config, config_class)
-        # binder.bind(CatalogService, catalog_service)
-        # binder.bind(CatalogRepository, catalog_repository)
-        # binder.bind(Index, index)
-        # binder.bind(ISessionManager, DictSessionManager())
+        binder.bind(Database, Injector.reflect(config.database))
 
     @staticmethod
     def bind_injector():

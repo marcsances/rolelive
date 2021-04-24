@@ -1,9 +1,12 @@
-CREATE TABLE Guild(
+-- These SQL queries are for reference only.
+-- Please refer to src.infrastructure.postgresql.queries for the production queries.
+
+CREATE TABLE IF NOT EXISTS Guild(
     guildId INT PRIMARY KEY,
     guildName TEXT
 );
 
-CREATE TABLE Role(
+CREATE TABLE IF NOT EXISTS Role(
     guildId INT NOT NULL,
     roleId INT NOT NULL,
     adminRole BOOLEAN NOT NULL,
@@ -11,7 +14,7 @@ CREATE TABLE Role(
     PRIMARY KEY (guildId, roleId)
 );
 
-CREATE TABLE UserRoles(
+CREATE TABLE IF NOT EXISTS UserRoles(
     guildId INT NOT NULL,
     userId INT NOT NULL,
     roleId INT NOT NULL,
@@ -20,14 +23,14 @@ CREATE TABLE UserRoles(
     PRIMARY KEY (guildId, userId, roleId)
 );
 
-CREATE TABLE Stream(
+CREATE TABLE IF NOT EXISTS Stream(
     platformId INT NOT NULL,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
     PRIMARY KEY (platformId, name)
 );
 
-CREATE TABLE StreamRecord(
+CREATE TABLE IF NOT EXISTS StreamRecord(
     guildId INT NOT NULL,
     platformId INT NOT NULL,
     name TEXT NOT NULL,
@@ -37,7 +40,7 @@ CREATE TABLE StreamRecord(
     PRIMARY KEY (guildId, platformId, name, createdBy)
 );
 
-CREATE TABLE GuildPreferences(
+CREATE TABLE IF NOT EXISTS GuildPreferences(
     guildId INT NOT NULL,
     prefKey TEXT NOT NULL,
     value TEXT NOT NULL,
@@ -45,7 +48,7 @@ CREATE TABLE GuildPreferences(
     PRIMARY KEY (guildId, prefKey)
 );
 
-CREATE TABLE NotificationStyle(
+CREATE TABLE IF NOT EXISTS NotificationStyle(
     guildId INT NOT NULL,
     channelId INT NOT NULL,
     message TEXT NOT NULL,
@@ -53,7 +56,7 @@ CREATE TABLE NotificationStyle(
     PRIMARY KEY (guildId, channelId)
 );
 
-CREATE TABLE StreamFilters(
+CREATE TABLE IF NOT EXISTS StreamFilters(
     guildId INT NOT NULL,
     filterId SERIAL,
     categoryMatch TEXT,
@@ -62,7 +65,7 @@ CREATE TABLE StreamFilters(
     PRIMARY KEY (guildId, filterId)
 );
 
-CREATE TABLE NotifiedChannels(
+CREATE TABLE IF NOT EXISTS NotifiedChannels(
     guildId INT NOT NULL,
     filterId INT NOT NULL,
     channelId INT NOT NULL,

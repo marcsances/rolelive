@@ -5,6 +5,7 @@ from domain.base.list_holder import ListHolder
 from domain.base.reifiable import Reifiable
 from domain.cache.cache import Cache
 from domain.chatbot.chatbot import Chatbot
+from domain.database.dbapi.database import Database
 
 
 class Config(Entity):
@@ -13,6 +14,7 @@ class Config(Entity):
         super().__init__()
         self.chatbots: ListHolder[Reifiable[Chatbot]] = ListHolder[Reifiable[Chatbot]](lambda: Reifiable[Chatbot]())
         self.cache = Reifiable[Cache]()
+        self.database = Reifiable[Database]()
 
     def load(self, json_file):
         with open(json_file, "r") as f:
