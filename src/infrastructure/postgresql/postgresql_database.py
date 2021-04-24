@@ -1,9 +1,12 @@
 import psycopg2
 
+from domain.database.dbapi.connection import Connection
 from domain.database.dbapi.database import Database
 from domain.database.queryapi.query_set import QuerySet
+from domain.guild.database.guild_queries import GuildQueries
 from infrastructure.postgresql.postgresql_connection import PostgreSQLConnection
 from infrastructure.postgresql.queries.postgresql_boostrap_queries import PostgreSQLBootstrapQueries
+from infrastructure.postgresql.queries.postgresql_guild_queries import PostgreSQLGuildQueries
 
 
 class PostgreSQLDatabase(Database):
@@ -18,7 +21,15 @@ class PostgreSQLDatabase(Database):
     def connect(self) -> PostgreSQLConnection:
         pgconn = psycopg2.connect(host=self.__host, port=self.__port, dbname=self.__dbname, user=self.__username,
                                   password=self.__password)
-        return PostgreSQLConnection(pgconn)
+        self._conn = PostgreSQLConnection(pgconn)
+        return self._conn
+
+    @property
+    def connection(self) -> Connection:
+        return self._conn
 
     def get_bootstrap_queries(self) -> QuerySet:
         return PostgreSQLBootstrapQueries()
+
+    def get_guild_queries(self) -> GuildQueries:
+        return PostgreSQLGuildQueries()

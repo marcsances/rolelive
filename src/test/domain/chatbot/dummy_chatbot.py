@@ -14,3 +14,6 @@ class DummyChatbot(Chatbot):
 
     def start_chatbot(self):
         pass
+
+    def get_guild_name(self, guild_id) -> str:
+        return "Dummy Guild!"

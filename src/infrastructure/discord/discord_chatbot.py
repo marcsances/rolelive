@@ -32,3 +32,6 @@ class DiscordChatbot(Chatbot, Client):
 
     def get_mention(self, user_id: int) -> str:
         return "<@" + str(user_id) + ">"
+
+    def get_guild_name(self, guild_id) -> str:
+        return self.get_guild(guild_id).name

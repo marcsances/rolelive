@@ -34,3 +34,7 @@ class Chatbot(ABC):
     @abstractmethod
     def start_chatbot(self) -> Future:
         raise NotImplementedError()
+
+    @abstractmethod
+    def get_guild_name(self, guild_id) -> str:
+        raise NotImplementedError
