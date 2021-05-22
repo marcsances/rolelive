@@ -24,16 +24,19 @@ all_members = dict()
 members_online = []
 
 def check_on_twitch(member):
-    response = requests.get("https://api.twitch.tv/kraken/users?login=" + member, headers={"Client-ID": TWITCH_CLIENT_ID, "Accept": "application/vnd.twitchtv.v5+json"})
-    if response.status_code == 200:
-        body = response.json()
-        if len(body["users"]) > 0:
-            uid = body["users"][0]["_id"]
-            response2 = requests.get("https://api.twitch.tv/kraken/streams/" + str(uid), headers={"Client-ID": TWITCH_CLIENT_ID, "Accept": "application/vnd.twitchtv.v5+json"})
-            if response2.status_code == 200:
-                body2 = response2.json()
-                if body2["stream"] != None:
-                    return body2
+    try:
+        response = requests.get("https://api.twitch.tv/kraken/users?login=" + member, headers={"Client-ID": TWITCH_CLIENT_ID, "Accept": "application/vnd.twitchtv.v5+json"})
+        if response.status_code == 200:
+            body = response.json()
+            if len(body["users"]) > 0:
+                uid = body["users"][0]["_id"]
+                response2 = requests.get("https://api.twitch.tv/kraken/streams/" + str(uid), headers={"Client-ID": TWITCH_CLIENT_ID, "Accept": "application/vnd.twitchtv.v5+json"})
+                if response2.status_code == 200:
+                    body2 = response2.json()
+                    if body2["stream"] != None:
+                        return body2
+    except Exception:
+        pass
     return None
 
 async def perform_check():
