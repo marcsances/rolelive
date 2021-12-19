@@ -4,12 +4,11 @@ import re
 import sys
 import uuid
 from datetime import datetime
+from enum import Enum
+from typing import Dict
+
 import discord
 import requests
-
-print("Please replace all client IDs, role IDs and tokens with the configuration you want for your server before "
-      "using Rolelive for the first time, then remove this print and the inmediately following line.")
-sys.exit(1)
 
 # Twitch Client ID for the bot to query the API
 TWITCH_CLIENT_ID = "REPLACE_ME"
@@ -84,9 +83,11 @@ async def perform_check():
         try:
             found = []
             for stream in set(all_members.values()):
+                print("Checking status for " + stream)
                 stream_info = check_on_twitch(stream)
                 if stream_info is not None:
                     if stream not in members_online and stream_info != "Error":
+                        print(stream + " is online")
                         members_online[stream] = Member(stream, ChannelStatus.ONLINE)
                         channel = client.get_channel(CHANNEL_ID)
                         title = stream_info["stream"]["channel"]["status"]
@@ -95,7 +96,7 @@ async def perform_check():
                     found.append(stream)
                 await asyncio.sleep(2)
             for stream in members_online:
-                if stream.channel not in found:
+                if stream not in found:
                     stream.status = ChannelStatus.OFFLINE
                     if (datetime.now() - stream.last_seen).total_seconds() > STREAM_EXPIRY:
                         del members_online[stream]
