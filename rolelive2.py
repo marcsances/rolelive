@@ -192,8 +192,9 @@ async def on_message(message):
 
 
 async def rolelive_help(channel):
+    global channel_name
     message = "**RoleLive Help** (RoleLive version " + VERSION + " by Marquii)\n```"
-    message = message + "This bot keeps track of Twitch streams and notifies in channel #" + channel.name + " when users go live.\n"
+    message = message + "This bot keeps track of Twitch streams and notifies in channel #" + channel_name + " when users go live.\n"
     message = message + "To add yourself to this bot, make sure you have one of the following roles: " + ", ".join(
         ROLE_NAMES) + "\n"
     message = message + "Then type '!addstream stream_name'. Do not type the twitch.tv side of the URL, just the " \
