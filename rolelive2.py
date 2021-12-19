@@ -10,6 +10,10 @@ from typing import Dict
 import discord
 import requests
 
+print("Please replace all client IDs, role IDs and tokens with the configuration you want for your server before "
+      "using Rolelive for the first time, then remove this print and the inmediately following line.")
+sys.exit(1)
+
 # Twitch Client ID for the bot to query the API
 TWITCH_CLIENT_ID = "REPLACE_ME"
 # Polling interval
