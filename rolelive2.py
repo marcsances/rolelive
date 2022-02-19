@@ -3,11 +3,9 @@ import json
 import math
 import time
 import uuid
-from typing import Optional, Generator
-import logging
+from typing import Optional, Generator, Set, List
 
 
-logging.basicConfig(level=logging.DEBUG)
 import discord
 import sys
 import requests
