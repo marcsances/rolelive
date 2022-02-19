@@ -63,7 +63,7 @@ def login() -> Optional[str]:
         return response.json()["access_token"]
 
 
-def generate_splits(members: set[str]) -> list[str]:
+def generate_splits(members: Set[str]) -> List[str]:
     formatted_members = list(map(lambda m: "user_login=" + quote(m), members))
     pages = list(range(math.ceil(len(members) / ITEMS_PER_PAGE)))
     paged_members_raw = list(map(lambda page: formatted_members[ITEMS_PER_PAGE * page:ITEMS_PER_PAGE * page + ITEMS_PER_PAGE], pages))
@@ -72,7 +72,7 @@ def generate_splits(members: set[str]) -> list[str]:
     return urls
 
 
-def check_on_twitch(members: set[str], helix_token, to_notify: list[list[str]]) -> Generator[Optional[str], None, None]:
+def check_on_twitch(members: Set[str], helix_token, to_notify: List[List[str]]) -> Generator[Optional[str], None, None]:
     global members_online
     for url in generate_splits(members):
         response = requests.get(url, headers={"Client-ID": HELIX_CLIENT_ID, "Authorization": "Bearer " + helix_token})
