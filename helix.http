@@ -1,0 +1,25 @@
+###
+# Login to Helix
+
+POST https://id.twitch.tv/oauth2/token
+    ?client_id={{client_id}}
+    &client_secret={{client_secret}}
+    &grant_type=client_credentials
+
+> {%
+ client.global.set("token", response.body.access_token);
+ %}
+
+###
+# Request stream list
+
+GET https://api.twitch.tv/helix/streams?user_login=monstercat&user_login=twitch&first=100
+Authorization: Bearer {{token}}
+Client-Id: {{client_id}}
+
+###
+# Request user
+
+GET https://api.twitch.tv/helix/users?login=twitch
+Authorization: Bearer {{token}}
+Client-Id: {{client_id}}

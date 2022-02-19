@@ -10,6 +10,16 @@ Users can add their streams using the !addstream command.
 
 There is also an implementation using a different approach (Rich Presence) in rolelive.py. That implementation is absolutely basic. But it may serve you as a template for a more rich bot. Up to you.
 
+## 2.0.0 version changelog
+
+- Upgraded Twitch API to use Helix API
+- Fixed stability issues with the fixes already introduced with Rolelive 0.3.1.
+- Much faster performance since now we take profit of Helix API allowing us to request up to 100 streams at once.
+- Rolelive will now detect ahead of time if the channel names are valid and exist on Twitch.
+- Database back to alive.json since the format has been rolled back to the old one.
+- Removed !streaminfo command since it was not used widely.
+- Minor bug fixes and usability improvements.
+
 ## 0.3.1 version changelog
 
 - Fixed a bug which caused Rolelive to stop sending alerts when it encountered a network error.
@@ -65,7 +75,7 @@ Now enable Developer Mode on Discord (go to Appearance > Developer mode). This w
 
 Now open the rolelive2.py file in this project and modify the export lines with the following values:
 
-* ``CLIENT_SECRET``: the client secret you just copied from the developer portal.
+* ``DISCORD_TOKEN``: the discord client secret you just copied from the developer portal.
 * ``GUILD_ID``: the server ID on Discord. Right click the icon of your server and click on "Copy ID".
 * ``ROLE_IDS``: all the role IDs (find a user with the role, right click the role label and choose "Copy ID") authorized to add their stream. Each role separated by commas.
 * ``ROLE_NAMES``: names of the roles in ROLE_IDS, for help purposes
@@ -73,9 +83,11 @@ Now open the rolelive2.py file in this project and modify the export lines with 
 * ``INTERVAL``: polling rate for the bot. This interval is the time the bot will sleep after checking all streams, before starting another cycle. Allows to help with rate limiting APIs, at the cost of less responsiveness. Keep it between 0 (for a lot of streams) to 120.
 * ``ADMIN_USERS``: **User IDs** allowed to manage the service.
 * ``ADMIN_IDS``: **Role IDs** allowed to manage the service (i.e. ALL users with the role will be able to run admin commands).
-* ``TWITCH_CLIENT_ID``: Twitch client ID required for accessing Twitch API. Get an ID [here](https://dev.twitch.tv/console/apps).
 * ``STREAM_EXPIRY``: time in seconds to wait since a channel goes online before it will be elligible again for notifications, this prevents duplicate alerts when a stream has technical issues and goes offline for a few minutes.
 * ``IGNORE_ROLES``: ignores ``ROLE_IDS`` parameter and lets anybody add himself into the list with no restriction
+* ``HELIX_CLIENT_ID``: Twitch client ID required for accessing Twitch API. Get an ID [here](https://dev.twitch.tv/console/apps).
+* ``HELIX_SECRET``: Twitch client secret token required for accessing Twitch API. Get an ID [here](https://dev.twitch.tv/console/apps).
+* ``ITEMS_PER_PAGE``: How many streams we check at a time. Maximum 100. Lower amount = more requests to Twitch, and that may mean you exceeding the quota, so keep it as high as possible.
 
 ## Installation
 

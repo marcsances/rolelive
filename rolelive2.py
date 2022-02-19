@@ -1,21 +1,23 @@
 import asyncio
 import json
-import re
-import sys
+import math
+import time
 import uuid
-from datetime import datetime
-from enum import Enum
-from typing import Dict
+from typing import Optional, Generator
+import logging
 
+
+logging.basicConfig(level=logging.DEBUG)
 import discord
+import sys
 import requests
+import re
+from requests.utils import quote
 
 print("Please replace all client IDs, role IDs and tokens with the configuration you want for your server before "
       "using Rolelive for the first time, then remove this print and the inmediately following line.")
 sys.exit(1)
 
-# Twitch Client ID for the bot to query the API
-TWITCH_CLIENT_ID = "REPLACE_ME"
 # Polling interval
 INTERVAL = 10
 # Names of the roles
@@ -23,7 +25,7 @@ ROLE_NAMES = ["Test User", "Test Admin"]
 # Message to show when somebody is live
 MESSAGE = "%s is now live: **%s** - _%s_ - %s"
 # RoleLive version
-VERSION = "0.3.1"
+VERSION = "2.0.0"
 # Discord Server ID that RoleLive will join
 GUILD_ID = REPLACE_ME
 # Discord valid role IDs
@@ -33,7 +35,7 @@ ADMIN_IDS = [REPLACE_ME]
 # Discord admin user IDs
 ADMIN_USERS = [REPLACE_ME]
 # Discord bot token
-CLIENT_SECRET = 'REPLACE_ME'
+DISCORD_TOKEN = 'REPLACE_ME'
 # Discord notification channel ID
 CHANNEL_ID = REPLACE_ME
 # Time that must pass since a channel goes offline to be considered elligible for notifications again
@@ -41,78 +43,95 @@ CHANNEL_ID = REPLACE_ME
 STREAM_EXPIRY = 3600
 # Ignore role IDs and let anyone add their streams with no restrictions
 IGNORE_ROLES = False
+# Client ID for Twitch Helix API https://dev.twitch.tv/console/app
+HELIX_CLIENT_ID = "CHANGE ME"
+# Access token for Twitch Helix API https://dev.twitch.tv/console/app
+HELIX_SECRET = "CHANGE ME"
+# Items per page to ask the Helix API. Maximum according to documentations is 100 (19/02/22)
+ITEMS_PER_PAGE = 99
 
-
-class ChannelStatus(Enum):
-    ONLINE = 0
-    OFFLINE = 1
-
-
-class Member:
-    def __init__(self, channel, status):
-        self.channel = channel
-        self.status = status
-        self.last_seen = datetime.now()
-
-
-channel_name = ""
 client = discord.Client()
+
 all_members = dict()
-members_online: Dict[str, Member] = dict()
+members_online = []
+expiring = dict()
 
 
-def check_on_twitch(member):
-    try:
-        response = requests.get("https://api.twitch.tv/kraken/users?login=" + member,
-                                headers={"Client-ID": TWITCH_CLIENT_ID, "Accept": "application/vnd.twitchtv.v5+json"})
+def login() -> Optional[str]:
+    response = requests.post(f"https://id.twitch.tv/oauth2/token?client_id={HELIX_CLIENT_ID}&client_secret={HELIX_SECRET}&grant_type=client_credentials")
+    if response.status_code == 200:
+        return response.json()["access_token"]
+
+
+def generate_splits(members: set[str]) -> list[str]:
+    formatted_members = list(map(lambda m: "user_login=" + quote(m), members))
+    pages = list(range(math.ceil(len(members) / ITEMS_PER_PAGE)))
+    paged_members_raw = list(map(lambda page: formatted_members[ITEMS_PER_PAGE * page:ITEMS_PER_PAGE * page + ITEMS_PER_PAGE], pages))
+    paged_members_filtered = filter(lambda page: len(list(page)) > 0, paged_members_raw)
+    urls = list(map(lambda members_of_page: "https://api.twitch.tv/helix/streams?first=" + str(ITEMS_PER_PAGE) + "&" + "&".join(members_of_page), paged_members_filtered))
+    return urls
+
+
+def check_on_twitch(members: set[str], helix_token, to_notify: list[list[str]]) -> Generator[Optional[str], None, None]:
+    global members_online
+    for url in generate_splits(members):
+        response = requests.get(url, headers={"Client-ID": HELIX_CLIENT_ID, "Authorization": "Bearer " + helix_token})
         if response.status_code == 200:
             body = response.json()
-            if len(body["users"]) > 0:
-                uid = body["users"][0]["_id"]
-                response2 = requests.get("https://api.twitch.tv/kraken/streams/" + str(uid),
-                                         headers={"Client-ID": TWITCH_CLIENT_ID,
-                                                  "Accept": "application/vnd.twitchtv.v5+json"})
-                if response2.status_code == 200:
-                    body2 = response2.json()
-                    if body2["stream"] != None:
-                        return body2
-    except Exception:
-        return "Error"
-    return None
+            for stream in body["data"]:
+                user = stream["user_name"]
+                title = stream["title"]
+                game = stream["game_name"]
+                if user not in members_online:
+                    if user not in expiring:
+                        to_notify.append([user, title, game])
+                    if user in expiring:
+                        del expiring[user]
+                    members_online.append(user)
+                yield user
+        else:
+            raise
+
+
+def purge_expiring():
+    must_remove = time.time() - STREAM_EXPIRY
+    to_remove = []
+    for user, timestamp in expiring.items():
+        if timestamp < must_remove:
+            to_remove.append(user)
+    for user in to_remove:
+        del expiring[user]
+
+
+def valid_twitch_user(username):
+    return re.match(r"^(#)?[a-zA-Z0-9][\w]{2,24}$", username) is not None
 
 
 async def perform_check():
-    global members_online
-    while True:
-        try:
-            found = []
-            for stream in set(all_members.values()):
-                print("Checking status for " + stream)
-                stream_info = check_on_twitch(stream)
-                if stream_info is not None:
-                    if stream not in members_online and stream_info != "Error":
-                        print(stream + " is online")
-                        members_online[stream] = Member(stream, ChannelStatus.ONLINE)
-                        channel = client.get_channel(CHANNEL_ID)
-                        title = stream_info["stream"]["channel"]["status"]
-                        game = stream_info["stream"]["channel"]["game"]
-                        await channel.send(MESSAGE % (stream, title, game, "https://twitch.tv/" + stream))
-                    found.append(stream)
-                await asyncio.sleep(2)
+    purge_expiring()
+    helix_token = login()
+    channel = client.get_channel(CHANNEL_ID)
+    if not helix_token:
+        sys.stderr.write("Couldn't login to Twitch Helix API!!! Waiting 1 minute before retrying")
+        await asyncio.sleep(60)
+    try:
+        global members_online
+        while True:
+            to_notify = []
+            found = list(check_on_twitch(set(filter(lambda x: valid_twitch_user(x), all_members.values())), helix_token, to_notify))
+            for lst in to_notify:
+                user, title, game = lst
+                await channel.send(MESSAGE % (user, title, game, "https://twitch.tv/" + user))
             for stream in members_online:
                 if stream not in found:
-                    stream.status = ChannelStatus.OFFLINE
-                    if (datetime.now() - stream.last_seen).total_seconds() > STREAM_EXPIRY:
-                        del members_online[stream]
-                else:
-                    stream.status = ChannelStatus.ONLINE
-                    stream.last_seen = datetime.now()
-            with open("channel_status.json", "w") as f:
+                    members_online.remove(stream)
+                    expiring[stream] = time.time()
+            with open("alive.json", "w") as f:
                 json.dump(members_online, f)
-        except Exception as e:
-            pass
-        finally:
             await asyncio.sleep(INTERVAL)
+    except Exception:
+        sys.stderr.write("Something in the checks failed! Waiting 1 minute before retrying")
+        await asyncio.sleep(60)
 
 
 def has_role(member):
@@ -131,6 +150,15 @@ def is_admin(member):
     return False
 
 
+def channel_exists(channel) -> bool:
+    helix_token = login()
+    if not helix_token:
+        raise
+    response = requests.get("https://api.twitch.tv/helix/users?login=" + quote(channel), headers={"Client-ID": HELIX_CLIENT_ID, "Authorization": "Bearer " + helix_token})
+    if response.status_code == 200:
+        return len(response.json()["data"]) > 0
+
+
 @client.event
 async def on_message(message):
     try:
@@ -138,41 +166,41 @@ async def on_message(message):
         global members_online
         channel = message.channel
         if message.content.startswith("!addstream"):
-            if len(message.content) < 14:
-                await channel.send(
-                    message.author.display_name + ", please tell me which is your stream! !addstream "
-                                                  "your_stream_name\nType !rolelive for help.")
+            stream = message.content.replace("!addstream ", "").replace("http://", "").replace("www.", "").replace("twitch.tv/", "").replace("/", "").strip()
+            if len(stream) < 2:
+                await channel.send(message.author.display_name + ", please tell me which is your stream! !addstream your_stream_name\nType !rolelive for help.")
+                return
+            if not valid_twitch_user(stream):
+                await channel.send("Sorry " + message.author.display_name + ", I didn't understand that channel name. You must type your Twitch username without the URL (e.g. MyStream), type !rolelive for help.")
                 return
             if not has_role(message.author) and not IGNORE_ROLES:
                 await channel.send("Sorry " + message.author.display_name +
-                                   ", your role is not authorized to add streams to the live channel. You must have "
-                                   "one of these roles: {roles}\nType !rolelive for help. "
+                                   ", your role is not authorized to add streams to the live channel. You must have one of these roles: {roles}\nType !rolelive for help."
                                    .format(roles=", ".join(ROLE_NAMES)))
                 return
-            await add_stream_of_user(all_members, channel, message)
+            try:
+                if not channel_exists(stream):
+                    await channel.send("It seems like " + channel + " is not an existing Twitch channel. Did you type the name correctly? Type !rolelive for help.")
+            except:
+                # okay, what a shame, let's add it ignoring the error
+                pass
+            await add_stream_of_user(all_members, channel, stream, message.author.id, message.author.display_name)
         elif message.content.startswith("!removestream"):
             if message.author.id not in all_members:
-                await channel.send(
-                    "Sorry " + message.author.display_name + ", you don't have any stream configured in this "
-                                                             "bot\nType !rolelive for help.")
+                await channel.send("Sorry " + message.author.display_name + ", you don't have any stream configured in this bot\nType !rolelive for help.")
                 return
             else:
                 await remove_stream_of_user(all_members, channel, message)
         elif message.content.startswith("!onlinestreams"):
             await show_streams_online(channel, members_online)
-        elif message.content.startswith("!streaminfo"):
-            await show_stream_info(channel, message)
         elif message.content.startswith("!admin"):
             if not is_admin(message.author):
-                await channel.send(
-                    "Sorry " + message.author.display_name + ", you must be administrator to manage streamer list")
+                await channel.send("Sorry " + message.author.display_name + ", you must be administrator to manage streamer list")
                 return
             cmd = message.content.replace("!admin.", "")
             if cmd.startswith("add"):
                 if "twitch.tv" in message.content:
-                    await channel.send(
-                        "Sorry " + message.author.display_name + ", you should add your stream name without the "
-                                                                 "twitch.tv/ URL.")
+                    await channel.send("Sorry " + message.author.display_name + ", you should add your stream name without the twitch.tv/ URL.")
                     return
                 await admin_add(all_members, channel, cmd, message)
             elif cmd.startswith("remove"):
@@ -180,9 +208,7 @@ async def on_message(message):
             elif cmd.startswith("list"):
                 await channel.send("This are all the streams I know: " + ", ".join(all_members.values()))
             elif cmd.startswith("help"):
-                await channel.send(
-                    "Admin help:\nAdd a stream with !admin.add stream_name\nRemove a stream with !admin.remove "
-                    "stream_name\nList all streams with !admin.list.")
+                await channel.send("Admin help:\nAdd a stream with !admin.add stream_name\nRemove a stream with !admin.remove stream_name\nList all streams with !admin.list.")
             elif cmd.startswith("reload"):
                 await reload_list(channel)
         elif message.content.startswith("!rolelive"):
@@ -192,9 +218,8 @@ async def on_message(message):
 
 
 async def rolelive_help(channel):
-    global channel_name
     message = "**RoleLive Help** (RoleLive version " + VERSION + " by Marquii)\n```"
-    message = message + "This bot keeps track of Twitch streams and notifies in channel #" + channel_name + " when users go live.\n"
+    message = message + "This bot keeps track of Twitch streams and notifies in channel #" + channel.name + " when users go live.\n"
     message = message + "To add yourself to this bot, make sure you have one of the following roles: " + ", ".join(
         ROLE_NAMES) + "\n"
     message = message + "Then type '!addstream stream_name'. Do not type the twitch.tv side of the URL, just the " \
@@ -207,24 +232,11 @@ async def rolelive_help(channel):
     message = message + "```\nPsst! Want this in your server? Visit <https://github.com/marcsances/rolelive>."
     await channel.send(message)
 
-
-async def add_stream_of_user(all_members, channel, message):
-    try:
-        stream = re.search(r'(?:(?:https?://)?(?:www\.)?twitch\.tv/)?([a-zA-Z0-9][\w]{2,24}$)',
-                           message.content.replace("!addstream ", "").strip(), re.IGNORECASE).group(1)
-    except AttributeError:
-        await channel.send("Sorry " + message.author.display_name + ", I couldn't guess your stream from your "
-                                                                    "message. Could you please type your Twitch "
-                                                                    "username without the URL?")
-        return
-    all_members[message.author.id] = stream
+async def add_stream_of_user(all_members, channel, stream, author_id, author_name):
+    all_members[author_id] = stream
     with open("members.json", "w") as f:
         json.dump(all_members, f)
-    await channel.send(
-        "OK " + message.author.display_name + ", your stream " + stream + " has been added to the list. Please ensure "
-                                                                          "I got the name right. Notice that if you "
-                                                                          "already had an stream in the list, "
-                                                                          "it has been replaced.")
+    await channel.send("OK " + author_name + ", I added your stream " + stream + " to the list. Watch out: If you already had a stream in the list, it will be replaced with this one!")
     await update_status()
 
 
@@ -238,28 +250,10 @@ async def remove_stream_of_user(all_members, channel, message):
 
 async def show_streams_online(channel, members_online):
     msg = "Streams currently online:\n"
-    for stream in map(lambda s: s.channel, filter(lambda x: x.status == ChannelStatus.ONLINE, members_online.values())):
+    for stream in members_online:
         msg = msg + stream + " - <https://twitch.tv/" + stream + ">\n"
-    msg = msg + "Type !streaminfo <stream_name> to get more information for a certain stream"
     await channel.send(msg)
 
-
-async def show_stream_info(channel, message):
-    user = message.content.replace("!streaminfo ", "")
-    stream_info = check_on_twitch(user)
-    if stream_info is not None:
-        game = stream_info["stream"]["channel"]["game"]
-        title = stream_info["stream"]["channel"]["status"]
-        viewers = stream_info["stream"]["viewers"]
-        link = "https://twitch.tv/" + user
-        message = "{user} is live playing {game}\n{title}\n{viewers} viewers\nWatch on {link}".format(user=user,
-                                                                                                      game=game,
-                                                                                                      title=title,
-                                                                                                      viewers=viewers,
-                                                                                                      link=link)
-        await channel.send(message)
-    else:
-        await channel.send("This stream seems to be offline or may not exist.")
 
 
 async def admin_add(all_members, channel, cmd, message):
@@ -267,6 +261,7 @@ async def admin_add(all_members, channel, cmd, message):
     with open("members.json", "w") as f:
         json.dump(all_members, f)
     await channel.send("OK " + message.author.display_name + ", I added that stream to the list")
+    await reload_list(channel)
     await update_status()
 
 
@@ -289,10 +284,10 @@ async def reload_list(channel):
     except:
         all_members = dict()
     try:
-        with open("channel_status.json", "r") as f:
+        with open("alive.json", "r") as f:
             members_online = json.load(f)
     except:
-        members_online = dict()
+        members_online = list()
     await channel.send("Reloaded streamer list")
     await update_status()
 
@@ -305,21 +300,19 @@ async def update_status():
 async def on_ready():
     global all_members
     global members_online
-    global channel_name
-    channel_name = client.get_channel(CHANNEL_ID)
     try:
         with open("members.json", "r") as f:
             all_members = json.load(f)
     except:
         all_members = dict()
     try:
-        with open("channel_status.json", "r") as f:
+        with open("alive.json", "r") as f:
             members_online = json.load(f)
     except:
-        members_online = dict()
+        members_online = list()
     client.loop.create_task(perform_check())
     await update_status()
     print("Ready")
 
 
-client.run(CLIENT_SECRET)
+client.run(DISCORD_TOKEN)
