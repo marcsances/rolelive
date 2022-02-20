@@ -23,7 +23,7 @@ ROLE_NAMES = ["Test User", "Test Admin"]
 # Message to show when somebody is live
 MESSAGE = "%s is now live: **%s** - _%s_ - %s"
 # RoleLive version
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 # Discord Server ID that RoleLive will join
 GUILD_ID = REPLACE_ME
 # Discord valid role IDs
@@ -38,6 +38,7 @@ DISCORD_TOKEN = 'REPLACE_ME'
 CHANNEL_ID = REPLACE_ME
 # Time that must pass since a channel goes offline to be considered elligible for notifications again
 # This prevents duplicate notifications for when a channel has technical issues
+# Currently broken, I'd love some help!
 STREAM_EXPIRY = 3600
 # Ignore role IDs and let anyone add their streams with no restrictions
 IGNORE_ROLES = False
@@ -81,10 +82,7 @@ def check_on_twitch(members: Set[str], helix_token, to_notify: List[List[str]]) 
                 title = stream["title"]
                 game = stream["game_name"]
                 if user not in members_online:
-                    if user not in expiring:
-                        to_notify.append([user, title, game])
-                    if user in expiring:
-                        del expiring[user]
+                    to_notify.append([user, title, game])
                     members_online.append(user)
                 yield user
         else:
